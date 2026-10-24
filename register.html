@@ -78,13 +78,13 @@ input{
     <div class="hint">注册即代表你发誓：不为凑单买东西，不被假折扣骗。</div>
     <div class="err" id="err"></div>
     <button class="bigbtn" id="regBtn">注册并入门</button>
-    <div class="links">已有账号？<a href="/login.html">直接登录</a></div>
+    <div class="links">已有账号？<a href="login.html">直接登录</a></div>
   </div>
   <div class="footer">⚠ 本系统特效经费仅剩五毛 ⚠</div>
 </div>
 
 <script>
-if(localStorage.getItem('jl_token')) location.href = '/';
+if(localStorage.getItem('jl_token') || localStorage.getItem('jl_demo')==='1') location.href = 'index.html';
 
 const err = m => document.getElementById('err').textContent = m;
 
@@ -106,7 +106,7 @@ document.getElementById('regBtn').onclick = async () => {
     if(!res.ok) return err(data.error || '注册失败');
     localStorage.setItem('jl_token', data.token);
     localStorage.setItem('jl_user', JSON.stringify(data.user));
-    location.href = '/';
+    location.href = 'index.html';
   }catch(e){ err('连不上服务器，服务器起了吗？'); }
 };
 document.getElementById('password2').addEventListener('keydown', e=>{

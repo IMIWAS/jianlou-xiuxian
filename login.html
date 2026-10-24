@@ -86,17 +86,30 @@ input{
     <div class="notice" id="wxNotice">
       💬 <b>微信登录说明</b>：真实微信扫码需要「微信开放平台企业认证（¥300/年）+ ICP 备案域名」，个人演示版暂时开不了这个挂。道友请先用手机号登录，功能一模一样！
     </div>
-    <div class="links">还没有账号？<a href="/register.html">点我注册，即刻入坑</a></div>
+    <div class="links">还没有账号？<a href="register.html">点我注册，即刻入坑</a></div>
+    <div class="notice" id="demoNotice">
+      🎮 检测到当前为<b>静态演示环境</b>（无云端服务器），账号功能不可用。<br>
+      <button class="bigbtn" style="margin-top:10px" id="demoBtn">免账号进入 · 单机演示</button>
+    </div>
   </div>
   <div class="footer">⚠ 本系统特效经费仅剩五毛 ⚠</div>
 </div>
 
 <script>
-if(localStorage.getItem('jl_token')) location.href = '/';
+if(localStorage.getItem('jl_token') || localStorage.getItem('jl_demo')==='1') location.href = 'index.html';
 
 const err = m => document.getElementById('err').textContent = m;
 document.getElementById('wxBtn').onclick = () =>
   document.getElementById('wxNotice').classList.toggle('show');
+
+// 静态托管（如 Gitee Pages）无后端：探测失败则展示单机演示入口
+fetch('/api/me').then(r=>{ if(!r.ok) throw 0; }).catch(()=>{
+  document.getElementById('demoNotice').classList.add('show');
+});
+document.getElementById('demoBtn').onclick = () => {
+  localStorage.setItem('jl_demo','1');
+  location.href = 'index.html';
+};
 
 document.getElementById('loginBtn').onclick = async () => {
   err('');
@@ -113,7 +126,7 @@ document.getElementById('loginBtn').onclick = async () => {
     if(!res.ok) return err(data.error || '登录失败');
     localStorage.setItem('jl_token', data.token);
     localStorage.setItem('jl_user', JSON.stringify(data.user));
-    location.href = '/';
+    location.href = 'index.html';
   }catch(e){ err('连不上服务器，服务器起了吗？'); }
 };
 document.getElementById('password').addEventListener('keydown', e=>{

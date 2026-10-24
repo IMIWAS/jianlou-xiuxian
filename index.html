@@ -395,7 +395,8 @@ h1.title{
 <script>
 /* ================= 鉴权门 ================= */
 const TOKEN = localStorage.getItem('jl_token');
-if(!TOKEN){ location.href = '/login.html'; }
+const DEMO = localStorage.getItem('jl_demo') === '1';   // 单机演示模式（静态托管无后端）
+if(!TOKEN && !DEMO){ location.href = 'login.html'; }
 
 /* ================= 数据 ================= */
 const SAVE_KEY = 'jianlou_xiuxian_v2';
@@ -443,7 +444,7 @@ async function api(url, opts){
   const res = await fetch(url, opts);
   if(res.status === 401){
     localStorage.removeItem('jl_token');
-    location.href = '/login.html';
+    location.href = 'login.html';
     throw Object.assign(new Error('unauthorized'), {status:401});
   }
   if(!res.ok) throw new Error('http '+res.status);
@@ -457,6 +458,7 @@ function save(){
   schedulePush();
 }
 function schedulePush(){
+  if(DEMO) return;
   dirty = true;
   setSync('⏳ 同步中…');
   clearTimeout(pushTimer);
@@ -487,6 +489,12 @@ async function pull(){
 }
 
 async function boot(){
+  if(DEMO){
+    document.getElementById('userChip').textContent = '🧙 演示道友';
+    setSync('🎮 单机演示版 · 数据存本机');
+    render();
+    return;
+  }
   // 用户栏
   try{
     const u = JSON.parse(localStorage.getItem('jl_user') || 'null');
@@ -513,10 +521,11 @@ async function boot(){
 }
 
 document.getElementById('logoutBtn').onclick = async () => {
-  try{ await api('/api/auth/logout', {method:'POST'}); }catch(e){}
+  if(!DEMO){ try{ await api('/api/auth/logout', {method:'POST'}); }catch(e){} }
   localStorage.removeItem('jl_token');
   localStorage.removeItem('jl_user');
-  location.href = '/login.html';
+  localStorage.removeItem('jl_demo');
+  location.href = 'login.html';
 };
 
 /* ================= 境界 ================= */
