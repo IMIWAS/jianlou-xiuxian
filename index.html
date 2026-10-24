@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>★ 捡漏修仙系统 · 民间捡漏协会内测版 ★</title>
+<style>
+/* ============ 五毛特效经费拨付处 ============ */
+* { margin:0; padding:0; box-sizing:border-box; user-select:none; }
+
+body{
+  min-height:100vh;
+  font-family:"Microsoft YaHei","SimHei",sans-serif;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255,215,0,.25), transparent 55%),
+    radial-gradient(circle at 10% 90%, rgba(255,0,0,.35), transparent 50%),
+    linear-gradient(160deg,#8b0000 0%,#b3001b 40%,#5c0000 100%);
+  background-attachment:fixed;
+  color:#ffe9a8;
+  padding:24px 12px 60px;
+  overflow-x:hidden;
+}
+
+.wrap{ max-width:540px; margin:0 auto; }
+
+/* ---- 顶部横幅 ---- */
+.banner{
+  text-align:center; font-size:14px; letter-spacing:2px; color:#ffd700;
+  border:2px dashed #ffd700; border-radius:6px; padding:6px; margin-bottom:10px;
+  animation:borderFlash 1s steps(2) infinite; background:rgba(0,0,0,.25);
+}
+@keyframes borderFlash{ 50%{ border-color:#ff4500; color:#ffec80; } }
+
+h1.title{
+  text-align:center; font-size:44px; font-weight:900; letter-spacing:6px; margin:8px 0 2px;
+  background:linear-gradient(180deg,#fff7c0 0%,#ffd700 35%,#b8860b 55%,#ffec8b 70%,#ffd700 100%);
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  filter:drop-shadow(0 2px 0 #7a4d00) drop-shadow(0 0 12px rgba(255,215,0,.8));
+  animation:titlePop 1.2s ease-in-out infinite;
+}
+@keyframes titlePop{ 0%,100%{transform:scale(1)} 50%{transform:scale(1.045)} }
+
+.marquee-box{ background:#000; border-top:2px solid #ffd700; border-bottom:2px solid #ffd700; margin:6px 0 14px; }
+.marquee-box marquee{ color:#00ff41; font-size:18px; font-weight:bold; padding:4px 0; text-shadow:0 0 6px #00ff41; }
+
+/* ---- 旋转金币 ---- */
+.coin-stage{ text-align:center; margin:4px 0 2px; perspective:600px; }
+.coin{
+  display:inline-block; font-size:64px;
+  animation:spinCoin 1.6s linear infinite;
+  filter:drop-shadow(0 0 14px rgba(255,215,0,.9));
+}
+@keyframes spinCoin{ from{transform:rotateY(0)} to{transform:rotateY(360deg)} }
+
+.congrats{
+  text-align:center; font-size:22px; font-weight:900; color:#ff2a2a;
+  text-shadow:0 0 4px #fff,0 0 12px #ffd700;
+  animation:blinkHard .5s steps(2) infinite; margin:2px 0 10px;
+}
+@keyframes blinkHard{ 50%{opacity:0} }
+
+/* ---- 卡片通用 ---- */
+.card{
+  background:linear-gradient(180deg,#fffbe6,#ffe9a8); color:#7a1f00;
+  border:3px solid #ffd700; border-radius:12px;
+  box-shadow:0 0 0 3px #8b0000,0 8px 20px rgba(0,0,0,.45);
+  padding:14px 16px; margin-bottom:14px;
+}
+.card h2{
+  font-size:18px; color:#b3001b; border-bottom:2px dashed #d4a017;
+  padding-bottom:6px; margin-bottom:10px; text-shadow:1px 1px 0 #fff;
+}
+.card h2::before{ content:"💰 "; }
+
+/* ---- 寻宝任务 ---- */
+.mission-type{
+  display:inline-block; font-size:12px; font-weight:bold; color:#fff;
+  background:linear-gradient(180deg,#ff5a3c,#c40000);
+  border-radius:4px; padding:2px 8px; margin-bottom:6px;
+}
+.mission-text{ font-size:16px; line-height:1.8; font-weight:bold; }
+.mission-status{ margin-top:8px; font-size:13px; text-align:center; color:#8a5a00; }
+.mission-status.done{ color:#0a8a00; font-weight:900; animation:blinkHard 1s steps(2) infinite; }
+
+/* ---- 数据面板 ---- */
+.stats{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; text-align:center; }
+.stat{
+  background:#fff; border:2px solid #d4a017; border-radius:8px;
+  padding:8px 4px; box-shadow:inset 0 -3px 0 #ffe08a;
+}
+.stat .num{ font-size:28px; font-weight:900; color:#d40000; text-shadow:1px 1px 0 #ffd700; }
+.stat .lbl{ font-size:12px; color:#8a5a00; margin-top:2px; }
+.realm{ margin-top:10px; text-align:center; font-size:16px; font-weight:bold; color:#4a2c00; }
+.realm .rname{ font-size:20px; color:#b3001b; animation:blinkHard 1s steps(2) infinite; }
+.louqi-bar{ height:14px; border-radius:7px; border:2px solid #b8860b; background:#fff; overflow:hidden; margin-top:6px; }
+.louqi-fill{
+  height:100%; width:0%;
+  background:repeating-linear-gradient(45deg,#ffd700 0 10px,#ff8c00 10px 20px);
+  transition:width .6s ease;
+}
+.louqi-text{ text-align:center; font-size:12px; color:#8a5a00; margin-top:3px; }
+
+/* ---- 登记表单 ---- */
+.form-row{ margin-bottom:10px; }
+.form-row label{ display:block; font-size:13px; font-weight:bold; color:#7a1f00; margin-bottom:4px; }
+.form-row input[type=text], .form-row input[type=number]{
+  width:100%; font-size:15px; padding:8px 10px;
+  border:3px inset #d4a017; border-radius:6px; background:#fffbe6; color:#7a1f00;
+  outline:none; user-select:text;
+}
+.type-chips{ display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.chip{
+  font-size:13px; font-weight:bold; text-align:center;
+  border:2px solid #c9a227; border-radius:6px; background:#fff;
+  padding:7px 4px; cursor:pointer; color:#7a5a10;
+}
+.chip.sel{
+  background:linear-gradient(180deg,#fff3b0,#ffd700);
+  border-color:#d40000; color:#a00000; box-shadow:0 0 8px #ffd700;
+}
+.price-2col{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.form-hint{ font-size:11px; color:#8a5a00; margin-top:4px; line-height:1.6; }
+
+/* ---- 大按钮 ---- */
+.bigbtn{
+  display:block; width:100%; font-size:22px; font-weight:900; letter-spacing:3px; color:#7a1f00;
+  background:linear-gradient(180deg,#fff3b0,#ffd700 45%,#ff9d00);
+  border:4px ridge #ffd700; border-radius:14px; padding:14px 10px; cursor:pointer;
+  box-shadow:0 6px 0 #8b5a00,0 10px 18px rgba(0,0,0,.5);
+  animation:btnGlow 1s ease-in-out infinite;
+}
+.bigbtn:active{ transform:translateY(4px); box-shadow:0 2px 0 #8b5a00; }
+@keyframes btnGlow{ 50%{ box-shadow:0 6px 0 #8b5a00,0 0 26px #ffd700; } }
+
+.subbtn{
+  width:100%; font-size:15px; font-weight:bold;
+  background:#fff; color:#0a6a00; border:3px dashed #0a6a00; border-radius:10px;
+  padding:10px; cursor:pointer; margin-bottom:14px;
+}
+.subbtn:disabled{ opacity:.5; cursor:not-allowed; }
+
+/* ---- 战果列表 ---- */
+.record{
+  background:#fff; border:2px solid #e0b400; border-radius:8px;
+  padding:10px; margin-bottom:8px;
+}
+.record .r-top{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.record .r-name{ font-weight:900; font-size:15px; color:#7a1f00; flex:1; min-width:40%; }
+.badge{
+  font-size:11px; font-weight:900; color:#fff; border-radius:4px; padding:2px 6px; white-space:nowrap;
+}
+.badge.t1{ background:#b5722f; }
+.badge.t2{ background:#8a8a8a; }
+.badge.t3{ background:linear-gradient(180deg,#ffd700,#ff8c00); color:#7a1f00; animation:blinkHard 1.2s steps(2) infinite; }
+.badge.type{ background:#4a6fa5; }
+.record .r-price{ font-size:13px; color:#8a5a00; margin-top:4px; }
+.record .r-price b{ color:#d40000; }
+.record .r-actions{ margin-top:8px; display:flex; gap:6px; flex-wrap:wrap; }
+.r-btn{
+  font-size:13px; font-weight:bold; border-radius:6px; padding:6px 10px; cursor:pointer;
+  border:2px solid #c9a227; background:#fffbe6; color:#7a1f00;
+}
+.r-btn.gold{ background:linear-gradient(180deg,#fff3b0,#ffd700); border-color:#d40000; color:#a00000; }
+.r-btn.fake{ border-color:#888; color:#666; background:#f0f0f0; }
+.r-panel{
+  margin-top:8px; border-top:2px dashed #d4a017; padding-top:8px; display:none;
+}
+.r-panel.open{ display:block; }
+.r-panel input[type=text]{
+  width:100%; font-size:13px; padding:6px 8px; margin-bottom:6px;
+  border:2px inset #d4a017; border-radius:6px; background:#fffbe6; user-select:text;
+}
+.r-check{ display:flex; align-items:center; gap:6px; font-size:13px; color:#7a1f00; margin-bottom:4px; cursor:pointer; }
+.r-check input{ width:16px; height:16px; accent-color:#c40000; }
+.r-submit{
+  width:100%; margin-top:4px; font-size:14px; font-weight:900; color:#fff;
+  background:linear-gradient(180deg,#ff5a3c,#c40000);
+  border:3px outset #ff8a70; border-radius:8px; padding:8px; cursor:pointer;
+}
+.records-empty{ text-align:center; font-size:13px; color:#8a5a00; padding:10px 0; line-height:1.8; }
+.records-summary{ text-align:center; font-size:13px; font-weight:bold; color:#b3001b; margin-top:4px; }
+
+/* ---- 成就 ---- */
+.ach-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.ach{ border:2px solid #c9a227; border-radius:8px; background:#fff; padding:10px 8px; text-align:center; }
+.ach .icon{ font-size:30px; filter:grayscale(1); opacity:.4; }
+.ach .name{ font-weight:bold; font-size:14px; color:#7a1f00; margin:2px 0; }
+.ach .desc{ font-size:11px; color:#8a5a00; line-height:1.5; }
+.ach.unlocked{ background:linear-gradient(180deg,#fff3b0,#ffd700); box-shadow:0 0 12px #ffd700; }
+.ach.unlocked .icon{ filter:none; opacity:1; animation:bounceIcon 1s ease infinite; }
+@keyframes bounceIcon{ 50%{ transform:translateY(-5px) scale(1.15);} }
+
+/* ---- 日历 ---- */
+.cal-head{ text-align:center; font-weight:bold; color:#b3001b; margin-bottom:6px; }
+.cal{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+.cal .dow{ text-align:center; font-size:11px; color:#8a5a00; }
+.cal .day{
+  aspect-ratio:1; display:flex; align-items:center; justify-content:center;
+  font-size:12px; background:#fff; border-radius:6px; border:1px solid #e5c465; color:#7a5a10;
+}
+.cal .day.checked{
+  background:radial-gradient(circle,#ffe97a,#ffb400);
+  border-color:#d40000; color:#a00000; font-weight:900; box-shadow:0 0 8px #ffd700;
+}
+.cal .day.today{ outline:2px dashed #d40000; }
+.cal .day.blank{ background:transparent; border:none; }
+
+/* ---- 弹窗 ---- */
+.modal-mask{
+  position:fixed; inset:0; background:rgba(0,0,0,.72);
+  display:none; align-items:center; justify-content:center; z-index:99; padding:20px;
+}
+.modal-mask.show{ display:flex; }
+.modal{
+  background:linear-gradient(180deg,#fffbe6,#ffe08a);
+  border:4px solid #ffd700; outline:4px dashed #ff2a2a; outline-offset:6px;
+  border-radius:14px; max-width:380px; width:100%; padding:26px 18px; text-align:center;
+  animation:modalIn .35s cubic-bezier(.2,2.2,.4,1);
+}
+@keyframes modalIn{ from{ transform:scale(.3) rotate(-8deg); opacity:0; } }
+.modal .m-title{
+  font-size:28px; font-weight:900; color:#d40000; text-shadow:2px 2px 0 #ffd700;
+  animation:blinkHard .6s steps(2) infinite;
+}
+.modal .m-body{ font-size:16px; color:#7a1f00; margin:14px 0 18px; line-height:1.9; }
+.modal .m-gain{ font-size:20px; font-weight:900; color:#0a8a00; }
+.modal button{
+  font-size:18px; font-weight:900; color:#fff;
+  background:linear-gradient(180deg,#ff5a3c,#c40000);
+  border:3px outset #ff8a70; border-radius:10px; padding:10px 34px; cursor:pointer;
+}
+
+/* ---- 金币雨 ---- */
+.rain-coin{ position:fixed; top:-60px; z-index:100; pointer-events:none; font-size:34px; animation:coinFall linear forwards; }
+@keyframes coinFall{ to{ transform:translateY(115vh) rotate(720deg); } }
+
+/* ---- 底部 ---- */
+.footer{ text-align:center; font-size:12px; color:#ffca7a; line-height:2; margin-top:8px; }
+.footer .warn{ color:#ff8080; animation:blinkHard 1.2s steps(2) infinite; }
+/* ---- 用户栏 & 同步状态 ---- */
+.userbar{
+  display:flex; align-items:center; gap:10px; font-size:12px; color:#ffd700;
+  background:rgba(0,0,0,.3); border:1px solid #ffd700; border-radius:6px;
+  padding:5px 10px; margin-bottom:10px;
+}
+.userbar .uchip{ font-weight:bold; }
+.userbar .sync{ margin-left:auto; color:#ffca7a; }
+.userbar a{ color:#ff8080; text-decoration:underline; cursor:pointer; }
+
+.reset-link{ display:block; text-align:center; margin-top:14px; color:#c98; font-size:11px; text-decoration:underline; cursor:pointer; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="banner">★ 民间捡漏协会 · 内测版 ★</div>
+
+  <div class="userbar">
+    <span class="uchip" id="userChip">🧙 …</span>
+    <span class="sync" id="syncStat">⏳ 连接云端…</span>
+    <a id="logoutBtn">退出</a>
+  </div>
+
+  <h1 class="title">捡漏修仙系统</h1>
+
+  <div class="marquee-box">
+    <marquee scrollamount="6">漏！漏！漏！💰 先发现，再验证，后坐实，假漏一律打入冷宫！💰 不花冤枉钱，专捡天上漏！💰</marquee>
+  </div>
+
+  <div class="coin-stage"><div class="coin">🪙</div></div>
+  <div class="congrats">✨ 恭 喜 发 财 ✨</div>
+
+  <!-- 今日寻宝任务 -->
+  <div class="card">
+    <h2>今日寻宝任务</h2>
+    <div class="mission-type" id="missionType">价格捡漏</div>
+    <div class="mission-text" id="missionText"></div>
+    <div class="mission-status" id="missionStatus">完成对应类型的捡漏登记，额外 +2 漏气值</div>
+  </div>
+
+  <!-- 道友修为 -->
+  <div class="card">
+    <h2>道友修为</h2>
+    <div class="stats">
+      <div class="stat"><div class="num" id="coins">0</div><div class="lbl">累计捡漏币<br>(约等于省下的元)</div></div>
+      <div class="stat"><div class="num" id="streak">0</div><div class="lbl">连续行动<br>(天)</div></div>
+      <div class="stat"><div class="num" id="louqi">0</div><div class="lbl">漏气值</div></div>
+    </div>
+    <div class="realm">当前境界：<span class="rname" id="realmName">捡漏学徒</span></div>
+    <div class="louqi-bar"><div class="louqi-fill" id="louqiFill"></div></div>
+    <div class="louqi-text" id="louqiText"></div>
+  </div>
+
+  <!-- 捡漏登记处 -->
+  <div class="card">
+    <h2>捡漏登记处 · 青铜入门</h2>
+    <div class="form-row">
+      <label>宝物名称（必填，不许瞎编）</label>
+      <input type="text" id="fName" placeholder="例：九成新机械键盘 / 临期进口牛奶">
+    </div>
+    <div class="form-row">
+      <label>捡漏类型</label>
+      <div class="type-chips" id="typeChips">
+        <div class="chip" data-type="price">💰 价格捡漏<br><small>低于二手行情</small></div>
+        <div class="chip" data-type="timing">⏰ 时机捡漏<br><small>清仓/临期/错峰</small></div>
+        <div class="chip" data-type="info">🧠 信息差捡漏<br><small>别人不识货</small></div>
+        <div class="chip" data-type="life">🍀 生活奇遇<br><small>任何占到便宜</small></div>
+      </div>
+    </div>
+    <div class="form-row price-2col">
+      <div>
+        <label>对方开价（元）</label>
+        <input type="number" id="fPrice" min="0" step="0.01" placeholder="45">
+      </div>
+      <div>
+        <label>参考行情价（元）</label>
+        <input type="number" id="fRef" min="0" step="0.01" placeholder="100">
+      </div>
+    </div>
+    <div class="form-hint">提交即得「青铜·发现漏」+1 漏气值；填了双价，捡漏币按差价入账。之后可补证升白银、坐实升黄金。</div>
+    <br>
+    <button class="bigbtn" id="submitBtn">【登记此漏】青铜 +1</button>
+  </div>
+
+  <!-- 今日战果 -->
+  <div class="card">
+    <h2>今日战果</h2>
+    <div id="recordList"></div>
+    <div class="records-summary" id="recordSummary"></div>
+  </div>
+
+  <button class="subbtn" id="emptyBtn">🍃 今日无漏可捡，我成功没花钱（触发隐藏成就）</button>
+
+  <!-- 成就殿堂 -->
+  <div class="card">
+    <h2>成就殿堂</h2>
+    <div class="ach-grid">
+      <div class="ach" id="ach-eye">
+        <div class="icon">👁️</div>
+        <div class="name">慧眼识珠</div>
+        <div class="desc">首条白银级战果：双对比价+排除瑕疵/假货/隐藏费</div>
+      </div>
+      <div class="ach" id="ach-gold">
+        <div class="icon">🏆</div>
+        <div class="name">捡漏成真</div>
+        <div class="desc">首条黄金级战果：实实在在到手</div>
+      </div>
+      <div class="ach" id="ach-fake">
+        <div class="icon">🥊</div>
+        <div class="name">打假先锋</div>
+        <div class="desc">识破一次假优惠/虚假期货</div>
+      </div>
+      <div class="ach" id="ach-empty">
+        <div class="icon">🍃</div>
+        <div class="name">空手而归<br><small style="color:#d40000">·至高隐藏成就·</small></div>
+        <div class="desc">今天没捡到漏，但成功没花钱</div>
+      </div>
+      <div class="ach" id="ach-alltype">
+        <div class="icon">🧭</div>
+        <div class="name">全能猎手</div>
+        <div class="desc">四种捡漏类型全部集齐</div>
+      </div>
+      <div class="ach" id="ach-king">
+        <div class="icon">👑</div>
+        <div class="name">漏王降临</div>
+        <div class="desc">连续 7 天有捡漏行动</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 捡漏日历 -->
+  <div class="card">
+    <h2>捡漏日历</h2>
+    <div class="cal-head" id="calHead"></div>
+    <div class="cal" id="calendar"></div>
+  </div>
+
+  <div class="footer">
+    <div class="warn">⚠ 警告：本系统特效经费仅剩五毛 ⚠</div>
+    <div>战果每日清空，修为永存 · 云端同步，多设备同修</div>
+  </div>
+
+  <a class="reset-link" id="resetLink">散尽修为，重新做人（清空数据）</a>
+</div>
+
+<!-- 土味弹窗 -->
+<div class="modal-mask" id="modalMask">
+  <div class="modal">
+    <div class="m-title" id="mTitle">天降横财！</div>
+    <div class="m-body" id="mBody"></div>
+    <button id="mClose">收入囊中！</button>
+  </div>
+</div>
+
+<script>
+/* ================= 鉴权门 ================= */
+const TOKEN = localStorage.getItem('jl_token');
+if(!TOKEN){ location.href = '/login.html'; }
+
+/* ================= 数据 ================= */
+const SAVE_KEY = 'jianlou_xiuxian_v2';
+const pad = n => String(n).padStart(2,'0');
+const todayStr = () => { const d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); };
+const yesterdayStr = () => { const d=new Date(); d.setDate(d.getDate()-1); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); };
+
+function freshState(){
+  return {
+    date: todayStr(),
+    coins: 0, louqi: 0, streak: 0, lastActiveDay: null,
+    records: [], emptyToday: false, missionDone: false,
+    history: {},
+    typesSeen: {price:false, timing:false, info:false, life:false},
+    achievements: {eye:false, gold:false, fake:false, empty:false, alltype:false, king:false},
+    updatedAt: 0
+  };
+}
+function normalizeDaily(s){          // 新的一天：战果清空，修为保留
+  if(s.date !== todayStr()){
+    s.date = todayStr();
+    s.records = [];
+    s.emptyToday = false;
+    s.missionDone = false;
+  }
+  return s;
+}
+let S = load();
+function load(){
+  try{
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(raw) return normalizeDaily(JSON.parse(raw));
+  }catch(e){}
+  return freshState();
+}
+
+/* ================= 云端同步 ================= */
+let dirty = false, pushTimer = null;
+function setSync(t){ const el = document.getElementById('syncStat'); if(el) el.textContent = t; }
+
+async function api(url, opts){
+  opts = opts || {};
+  opts.headers = Object.assign({'Authorization':'Bearer '+TOKEN}, opts.headers);
+  if(opts.body) opts.headers['Content-Type'] = 'application/json';
+  const res = await fetch(url, opts);
+  if(res.status === 401){
+    localStorage.removeItem('jl_token');
+    location.href = '/login.html';
+    throw Object.assign(new Error('unauthorized'), {status:401});
+  }
+  if(!res.ok) throw new Error('http '+res.status);
+  return res.json();
+}
+
+function persistLocalOnly(){ localStorage.setItem(SAVE_KEY, JSON.stringify(S)); }
+function save(){
+  S.updatedAt = Date.now();
+  persistLocalOnly();
+  schedulePush();
+}
+function schedulePush(){
+  dirty = true;
+  setSync('⏳ 同步中…');
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(pushNow, 800);
+}
+async function pushNow(){
+  if(!dirty) return;
+  try{
+    await api('/api/save', {method:'PUT', body: JSON.stringify({state: S})});
+    dirty = false;
+    const d = new Date();
+    setSync('☁️ 已同步 '+pad(d.getHours())+':'+pad(d.getMinutes()));
+  }catch(e){
+    if(e.status !== 401) setSync('⚠️ 离线模式（本地保存中）');
+  }
+}
+async function pull(){
+  if(dirty) return;                       // 本地有未上传修改，跳过本轮
+  try{
+    const {state} = await api('/api/save');
+    if(state && (state.updatedAt||0) > (S.updatedAt||0)){
+      S = normalizeDaily(state);
+      persistLocalOnly();
+      render();
+      setSync('☁️ 已同步（他端更新）');
+    }
+  }catch(e){ /* 静默，下轮再试 */ }
+}
+
+async function boot(){
+  // 用户栏
+  try{
+    const u = JSON.parse(localStorage.getItem('jl_user') || 'null');
+    if(u) document.getElementById('userChip').textContent =
+      '🧙 ' + (u.nickname || u.phone.replace(/(\d{3})\d{4}(\d{4})/,'$1****$2'));
+  }catch(e){}
+
+  try{
+    const me = await api('/api/me');      // 顺便验证 token 有效性
+    localStorage.setItem('jl_user', JSON.stringify(me.user));
+    const {state} = await api('/api/save');
+    if(state && (state.updatedAt||0) >= (S.updatedAt||0)){
+      S = normalizeDaily(state);          // 云端为准（含多设备最新进度）
+      persistLocalOnly();
+    }else if(localStorage.getItem(SAVE_KEY)){
+      dirty = true; pushNow();            // 本地单机老存档 → 首次迁移上云
+    }
+    if(!dirty) setSync('☁️ 已同步');
+  }catch(e){
+    if(e.status !== 401) setSync('⚠️ 离线模式（本地保存中）');
+  }
+  render();
+  setInterval(pull, 15000);               // 每 15 秒拉一次，实现多设备同步
+}
+
+document.getElementById('logoutBtn').onclick = async () => {
+  try{ await api('/api/auth/logout', {method:'POST'}); }catch(e){}
+  localStorage.removeItem('jl_token');
+  localStorage.removeItem('jl_user');
+  location.href = '/login.html';
+};
+
+/* ================= 境界 ================= */
+const REALMS = [
+  {min:0,   name:'捡漏学徒'},
+  {min:15,  name:'捡漏达人'},
+  {min:40,  name:'捡漏大师'},
+  {min:80,  name:'捡漏宗师'},
+  {min:150, name:'漏王本王'}
+];
+function realmOf(lq){
+  let r = REALMS[0], next = null;
+  for(let i=0;i<REALMS.length;i++){
+    if(lq >= REALMS[i].min){ r = REALMS[i]; next = REALMS[i+1] || null; }
+  }
+  return {cur:r, next};
+}
+
+/* ================= 类型 & 寻宝任务 ================= */
+const TYPES = {price:'💰 价格捡漏', timing:'⏰ 时机捡漏', info:'🧠 信息差捡漏', life:'🍀 生活奇遇'};
+const MISSIONS = [
+  {type:'price', text:'打开闲鱼，搜一件你最近真想买的东西，按「新发布」排序，找一件明显低于同款行情的。'},
+  {type:'timing', text:'翻翻你的购物车，挑一件查它的历史价格，看看今天是不是真低价。'},
+  {type:'info', text:'找一件被卖家低估的东西：老款设备、绝版书、停产好物……用你懂的信息差识别它。'},
+  {type:'life', text:'今天留意任何「赚到」的瞬间：免费领、积分兑换、错峰优惠、临期折扣。'},
+  {type:'price', text:'去二手平台搜「搬家急出」「毕业清仓」「离职转让」，这类标签里常有好漏。'},
+  {type:'timing', text:'看看常买的店有没有清仓区/临期区——只挑你本来就需要的东西。'},
+  {type:'info', text:'搜一个你懂行的品类（相机/键盘/球鞋……），价格从低到高排序，找识货人才能看出的漏。'},
+  {type:'life', text:'检查各 App 的会员权益和积分，看有没有快过期但正好能用上的。'}
+];
+function todayMission(){
+  const d = new Date();
+  const start = new Date(d.getFullYear(),0,0);
+  const doy = Math.floor((d-start)/86400000);
+  return MISSIONS[(d.getFullYear()*1000 + doy) % MISSIONS.length];
+}
+const MISSION = todayMission();
+
+/* ================= 渲染 ================= */
+let selType = MISSION.type;
+
+function render(){
+  // 寻宝任务
+  document.getElementById('missionType').textContent = TYPES[MISSION.type];
+  document.getElementById('missionText').textContent = MISSION.text;
+  const ms = document.getElementById('missionStatus');
+  if(S.missionDone){ ms.textContent = '✅ 寻宝任务已完成！道友今日机缘深厚'; ms.classList.add('done'); }
+  else{ ms.textContent = '完成对应类型的捡漏登记，额外 +2 漏气值'; ms.classList.remove('done'); }
+
+  // 修为
+  document.getElementById('coins').textContent = S.coins;
+  document.getElementById('streak').textContent = S.streak;
+  document.getElementById('louqi').textContent = S.louqi;
+  const {cur, next} = realmOf(S.louqi);
+  document.getElementById('realmName').textContent = cur.name;
+  const fill = document.getElementById('louqiFill'), txt = document.getElementById('louqiText');
+  if(next){
+    fill.style.width = Math.min(100,(S.louqi-cur.min)/(next.min-cur.min)*100) + '%';
+    txt.textContent = '距「'+next.name+'」还需 '+(next.min-S.louqi)+' 点漏气值';
+  }else{
+    fill.style.width = '100%'; txt.textContent = '已臻化境，万漏之祖！';
+  }
+
+  // 类型选择
+  document.querySelectorAll('#typeChips .chip').forEach(c=>
+    c.classList.toggle('sel', c.dataset.type===selType));
+
+  // 战果列表
+  renderRecords();
+
+  // 空手而归按钮
+  document.getElementById('emptyBtn').disabled = S.emptyToday || S.records.length>0;
+  document.getElementById('emptyBtn').textContent = S.emptyToday
+    ? '🍃 今日已空手而归，境界+1'
+    : '🍃 今日无漏可捡，我成功没花钱（触发隐藏成就）';
+
+  // 成就
+  const A = S.achievements;
+  document.getElementById('ach-eye').classList.toggle('unlocked', A.eye);
+  document.getElementById('ach-gold').classList.toggle('unlocked', A.gold);
+  document.getElementById('ach-fake').classList.toggle('unlocked', A.fake);
+  document.getElementById('ach-empty').classList.toggle('unlocked', A.empty);
+  document.getElementById('ach-alltype').classList.toggle('unlocked', A.alltype);
+  document.getElementById('ach-king').classList.toggle('unlocked', A.king);
+
+  renderCalendar();
+}
+
+function renderRecords(){
+  const list = document.getElementById('recordList');
+  list.innerHTML = '';
+  if(S.records.length === 0){
+    list.innerHTML = '<div class="records-empty">今日尚无战果。<br>捡到一个是一个，捡不到就去领「空手而归」。</div>';
+  }
+  S.records.forEach(r=>{
+    const div = document.createElement('div');
+    div.className = 'record';
+    let priceHtml = '';
+    if(r.price !== null && r.ref !== null && r.ref > r.price){
+      priceHtml = '<div class="r-price">开价 ¥'+r.price+' ｜ 行情 ¥'+r.ref+' ｜ 约省 <b>¥'+Math.round(r.ref-r.price)+'</b></div>';
+    }else if(r.price !== null){
+      priceHtml = '<div class="r-price">开价 ¥'+r.price+'</div>';
+    }
+    let actions = '';
+    if(r.tier === 1){
+      actions = '<div class="r-actions">'+
+        '<button class="r-btn" data-act="openSilver" data-id="'+r.id+'">🔍 补证升级白银 +3</button>'+
+        '<button class="r-btn fake" data-act="fake" data-id="'+r.id+'">这漏有诈 🥊</button></div>'+
+        '<div class="r-panel" id="panel-'+r.id+'">'+
+          '<input type="text" id="cmp1-'+r.id+'" placeholder="对比价 ① 来源+价格，例：京东同款 ¥99">'+
+          '<input type="text" id="cmp2-'+r.id+'" placeholder="对比价 ② 来源+价格，例：淘宝同款 ¥95">'+
+          '<label class="r-check"><input type="checkbox" id="ck1-'+r.id+'">已排除瑕疵/暗病</label>'+
+          '<label class="r-check"><input type="checkbox" id="ck2-'+r.id+'">已排除假货风险</label>'+
+          '<label class="r-check"><input type="checkbox" id="ck3-'+r.id+'">已排除隐藏费用（运费/手续费）</label>'+
+          '<button class="r-submit" data-act="silver" data-id="'+r.id+'">验证通过，升级白银！</button>'+
+        '</div>';
+    }else if(r.tier === 2){
+      actions = '<div class="r-actions">'+
+        '<button class="r-btn gold" data-act="gold" data-id="'+r.id+'">💰 已到手，坐实此漏！+5</button></div>';
+    }else{
+      actions = '<div class="r-actions" style="font-size:13px;color:#0a8a00;font-weight:900">✅ 黄金战果，已坐实！</div>';
+    }
+    div.innerHTML =
+      '<div class="r-top"><span class="r-name">'+escapeHtml(r.name)+'</span>'+
+      '<span class="badge type">'+TYPES[r.type]+'</span>'+
+      '<span class="badge t'+r.tier+'">'+(['','青铜·发现漏','白银·验证漏','黄金·成功捡漏'][r.tier])+'</span></div>'+
+      priceHtml + actions;
+    list.appendChild(div);
+  });
+  const t1=S.records.filter(r=>r.tier===1).length,
+        t2=S.records.filter(r=>r.tier===2).length,
+        t3=S.records.filter(r=>r.tier===3).length;
+  document.getElementById('recordSummary').textContent = S.records.length
+    ? '今日战果 '+S.records.length+' 件 · 青铜×'+t1+' 白银×'+t2+' 黄金×'+t3 : '';
+}
+
+function escapeHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderCalendar(){
+  const now = new Date(), y = now.getFullYear(), m = now.getMonth();
+  document.getElementById('calHead').textContent = y + '年' + (m+1) + '月';
+  const cal = document.getElementById('calendar');
+  cal.innerHTML = '';
+  ['日','一','二','三','四','五','六'].forEach(d=>{
+    const el = document.createElement('div'); el.className='dow'; el.textContent=d; cal.appendChild(el);
+  });
+  const first = new Date(y, m, 1).getDay();
+  const days = new Date(y, m+1, 0).getDate();
+  for(let i=0;i<first;i++){
+    const el = document.createElement('div'); el.className='day blank'; cal.appendChild(el);
+  }
+  for(let d=1; d<=days; d++){
+    const key = y+'-'+pad(m+1)+'-'+pad(d);
+    const el = document.createElement('div');
+    el.className = 'day' + (S.history[key] ? ' checked' : '') + (key===todayStr() ? ' today' : '');
+    el.textContent = S.history[key] ? '漏' : d;
+    cal.appendChild(el);
+  }
+}
+
+/* ================= 弹窗 & 金币雨 ================= */
+const QUOTES = [
+  '此漏只应天上有，人间能得几回捡！',
+  '掌柜的哭了，道友笑了！',
+  '火眼金睛，奸商闻风丧胆！',
+  '漏气灌顶，功力大增！',
+  '捡到就是赚到，不捡就是省到！'
+];
+function showModal(title, bodyHTML){
+  document.getElementById('mTitle').textContent = title;
+  document.getElementById('mBody').innerHTML = bodyHTML;
+  document.getElementById('modalMask').classList.add('show');
+  coinRain();
+}
+document.getElementById('mClose').onclick = () =>
+  document.getElementById('modalMask').classList.remove('show');
+
+function coinRain(n){
+  n = n || 26;
+  const icons = ['🪙','💰','💸','✨','🧧'];
+  for(let i=0;i<n;i++){
+    const el = document.createElement('div');
+    el.className = 'rain-coin';
+    el.textContent = icons[Math.floor(Math.random()*icons.length)];
+    el.style.left = Math.random()*96 + 'vw';
+    el.style.animationDuration = (1.2 + Math.random()*1.6) + 's';
+    el.style.animationDelay = (Math.random()*0.5) + 's';
+    el.style.fontSize = (22 + Math.random()*26) + 'px';
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(), 3800);
+  }
+}
+
+/* ================= 核心逻辑 ================= */
+function markActive(){
+  const t = todayStr();
+  if(!S.history[t]){
+    S.history[t] = true;
+    S.streak = (S.lastActiveDay === yesterdayStr()) ? S.streak + 1 : 1;
+    S.lastActiveDay = t;
+  }
+}
+function checkKing(){
+  if(S.streak >= 7 && !S.achievements.king){ S.achievements.king = true; return true; }
+  return false;
+}
+function checkAlltype(){
+  const t = S.typesSeen;
+  if(t.price && t.timing && t.info && t.life && !S.achievements.alltype){
+    S.achievements.alltype = true; return true;
+  }
+  return false;
+}
+function quote(){ return QUOTES[Math.floor(Math.random()*QUOTES.length)]; }
+
+/* ---- 青铜登记 ---- */
+document.querySelectorAll('#typeChips .chip').forEach(c=>{
+  c.onclick = () => { selType = c.dataset.type; render(); };
+});
+
+document.getElementById('submitBtn').onclick = () => {
+  const name = document.getElementById('fName').value.trim();
+  if(!name){
+    showModal('且慢！', '宝物名称都没填，这也叫捡漏？<br>登记处不是许愿池，道友请自重。');
+    return;
+  }
+  const pv = parseFloat(document.getElementById('fPrice').value);
+  const rv = parseFloat(document.getElementById('fRef').value);
+  const price = isNaN(pv) ? null : pv;
+  const ref   = isNaN(rv) ? null : rv;
+
+  const r = { id: Date.now(), name, type: selType, price, ref, tier: 1 };
+  S.records.push(r);
+
+  let gainLq = 1;
+  let gainCoin = (price!==null && ref!==null && ref>price) ? Math.round(ref-price) : 1;
+  S.coins += gainCoin;
+
+  const newAch = [];
+  S.typesSeen[selType] = true;
+  if(checkAlltype()) newAch.push('🧭 全能猎手');
+
+  let missionBonus = false;
+  if(!S.missionDone && selType === MISSION.type){
+    S.missionDone = true; gainLq += 2; missionBonus = true;
+  }
+  S.louqi += gainLq;
+
+  markActive();
+  if(checkKing()) newAch.push('👑 漏王降临');
+
+  save(); render();
+  document.getElementById('fName').value = '';
+  document.getElementById('fPrice').value = '';
+  document.getElementById('fRef').value = '';
+
+  let body = quote() + '<br>「'+escapeHtml(name)+'」已登记为 <b>青铜·发现漏</b>。' +
+    '<br><span class="m-gain">漏气值 +'+gainLq+'　捡漏币 +'+gainCoin+'</span>';
+  if(missionBonus) body += '<br>🎯 寻宝任务达成，额外 +2 漏气值！';
+  body += '<br><small>记得补证升级白银，到手后坐实黄金！</small>';
+  if(newAch.length) body += '<br>🏆 解锁成就：' + newAch.join('、');
+  showModal('发现一漏！', body);
+};
+
+/* ---- 战果操作（事件委托） ---- */
+document.getElementById('recordList').onclick = e => {
+  const btn = e.target.closest('[data-act]');
+  if(!btn) return;
+  const id = Number(btn.dataset.id);
+  const r = S.records.find(x=>x.id===id);
+  if(!r) return;
+  const act = btn.dataset.act;
+
+  if(act === 'openSilver'){
+    document.getElementById('panel-'+id).classList.toggle('open');
+  }
+  else if(act === 'silver'){
+    const c1 = document.getElementById('cmp1-'+id).value.trim();
+    const c2 = document.getElementById('cmp2-'+id).value.trim();
+    const k1 = document.getElementById('ck1-'+id).checked;
+    const k2 = document.getElementById('ck2-'+id).checked;
+    const k3 = document.getElementById('ck3-'+id).checked;
+    if(!c1 || !c2){
+      showModal('证据不足！', '白银级需要 <b>两个</b> 可信对比价。<br>空口说漏，协会不认。');
+      return;
+    }
+    if(!(k1 && k2 && k3)){
+      showModal('且慢升级！', '瑕疵、假货、隐藏费用，三项排查一个都不能少。<br>这是捡漏协会的规矩。');
+      return;
+    }
+    r.tier = 2; r.cmp = [c1, c2];
+    S.louqi += 3;
+    const newAch = [];
+    if(!S.achievements.eye){ S.achievements.eye = true; newAch.push('👁️ 慧眼识珠'); }
+    save(); render();
+    let body = '双对比价在手，三项排查通过！<br>「'+escapeHtml(r.name)+'」升级为 <b>白银·验证漏</b>。' +
+      '<br><span class="m-gain">漏气值 +3</span><br><small>到手之后，记得回来坐实黄金！</small>';
+    if(newAch.length) body += '<br>🏆 解锁成就：' + newAch.join('、');
+    showModal('验证通过！', body);
+  }
+  else if(act === 'gold'){
+    r.tier = 3;
+    S.louqi += 5;
+    const newAch = [];
+    if(!S.achievements.gold){ S.achievements.gold = true; newAch.push('🏆 捡漏成真'); }
+    save(); render();
+    let body = quote() + '<br>「'+escapeHtml(r.name)+'」真正到手，坐实为 <b>黄金·成功捡漏</b>！' +
+      '<br><span class="m-gain">漏气值 +5</span>';
+    if(newAch.length) body += '<br>🏆 解锁成就：' + newAch.join('、');
+    showModal('捡漏成真！', body);
+    coinRain(40);
+  }
+  else if(act === 'fake'){
+    S.records = S.records.filter(x=>x.id!==id);
+    S.louqi += 2;
+    const newAch = [];
+    if(!S.achievements.fake){ S.achievements.fake = true; newAch.push('🥊 打假先锋'); }
+    save(); render();
+    let body = '虚假折扣、先涨后降、暗藏瑕疵——<br>道友一眼识破，奸商连夜改价！' +
+      '<br><span class="m-gain">漏气值 +2</span><br><small>没被骗，就是今天最大的漏。</small>';
+    if(newAch.length) body += '<br>🏆 解锁成就：' + newAch.join('、');
+    showModal('识破假漏！', body);
+  }
+};
+
+/* ---- 空手而归 ---- */
+document.getElementById('emptyBtn').onclick = () => {
+  if(S.emptyToday || S.records.length>0) return;
+  S.louqi += 6;
+  S.emptyToday = true;
+  markActive();
+  const newAch = [];
+  if(!S.achievements.empty){ S.achievements.empty = true; newAch.push('🍃 空手而归'); }
+  if(checkKing()) newAch.push('👑 漏王降临');
+  save(); render();
+  let body = '今日没捡到漏，但一分钱没花。<br>不买立省 100%，这才是捡漏的最高境界！' +
+    '<br><span class="m-gain">漏气值 +6</span>';
+  if(newAch.length) body += '<br>🏆 解锁成就：' + newAch.join('、');
+  showModal('至高境界！', body);
+  coinRain(40);
+};
+
+/* ---- 重置 ---- */
+document.getElementById('resetLink').onclick = () => {
+  if(confirm('确定要散尽修为、重新做人吗？此操作不可撤销！')){
+    localStorage.removeItem(SAVE_KEY);
+    S = freshState(); selType = MISSION.type;
+    save(); render();          // 同步清空云端存档
+  }
+};
+
+boot();
+</script>
+</body>
+</html>
